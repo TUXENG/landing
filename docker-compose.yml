@@ -1,0 +1,47 @@
+# Producción en tuxserver: reutiliza db-postgres, db-redis (internal_net) y proxy-caddy (proxy_net).
+services:
+  landing-api:
+    build:
+      context: ./backend
+    container_name: landing-api
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - ./uploads:/app/uploads
+    networks:
+      - proxy_net
+      - internal_net
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  landing-web:
+    build:
+      context: ./frontend
+    container_name: landing-web
+    restart: unless-stopped
+    networks:
+      - proxy_net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+
+networks:
+  proxy_net:
+    external: true
+  internal_net:
+    external: true

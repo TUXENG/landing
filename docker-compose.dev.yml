@@ -1,0 +1,21 @@
+# Desarrollo local en PC: levanta PostgreSQL y Redis temporales solo en 127.0.0.1.
+services:
+  dev-postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: landing_user
+      POSTGRES_PASSWORD: dev_password
+      POSTGRES_DB: landing_db
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - dev_pgdata:/var/lib/postgresql/data
+
+  dev-redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--requirepass", "dev_redis_password"]
+    ports:
+      - "127.0.0.1:6379:6379"
+
+volumes:
+  dev_pgdata:
