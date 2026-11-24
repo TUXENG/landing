@@ -179,8 +179,16 @@ DEFAULT_SECTIONS: dict[str, dict[str, Any]] = {
                     "description": "Sesiones enfocadas en resolver dudas concretas, talleres y exámenes.",
                 },
                 {
-                    "title": "Asesoría de Proyectos de Grado y Maquetas",
-                    "description": "Acompañamiento técnico en diseño, simulación, código y montaje funcional.",
+                    "title": "Informes de Laboratorio",
+                    "description": "Apoyo técnico en análisis de resultados, cálculos, gráficas y redacción estructurada de prácticas.",
+                },
+                {
+                    "title": "Proyectos Finales y Maquetas",
+                    "description": "Diseño, simulación, programación y montaje funcional para entregas de materias prácticas.",
+                },
+                {
+                    "title": "Asesoría de Proyectos de Grado",
+                    "description": "Acompañamiento integral en arquitectura, prototipo hardware/software, pruebas y sustentación.",
                 },
             ],
         },
@@ -237,6 +245,7 @@ DEFAULT_SECTIONS: dict[str, dict[str, Any]] = {
             "linkedin": "https://linkedin.com/in/tu-usuario",
             "youtube": "",
             "instagram": "",
+            "tiktok": "",
         },
     },
 }

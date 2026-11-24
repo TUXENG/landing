@@ -1,1 +1,54 @@
 @import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  --color-tux-obsidian: #08090d;
+  --color-tux-surface: #11131a;
+  --color-tux-elevated: #161923;
+  --color-tux-gold: #fbbf24;
+  --color-tux-amber: #f59e0b;
+  --color-tux-orange: #f97316;
+}
+
+@layer base {
+  html {
+    background-color: #08090d;
+    color: #f8fafc;
+    font-family: var(--font-sans);
+    color-scheme: dark;
+  }
+
+  body {
+    background-color: #08090d;
+    background-image:
+      radial-gradient(60rem 36rem at 50% -10%, rgba(245, 158, 11, 0.14), transparent 65%),
+      radial-gradient(40rem 28rem at 85% 20%, rgba(249, 115, 22, 0.08), transparent 70%);
+    background-attachment: fixed;
+  }
+}
+
+.tux-glass {
+  background: linear-gradient(180deg, rgba(22, 25, 35, 0.78) 0%, rgba(14, 16, 23, 0.72) 100%);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.tux-cta {
+  background: linear-gradient(135deg, #fcd34d 0%, #f59e0b 52%, #f97316 100%);
+  color: #08090d;
+  box-shadow: 0 10px 30px -10px rgba(245, 158, 11, 0.55);
+}
+
+.tux-cta:hover {
+  filter: brightness(1.06);
+  box-shadow: 0 14px 36px -10px rgba(249, 115, 22, 0.65);
+}
+
+.tux-grid-bg {
+  background-size: 48px 48px;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+}

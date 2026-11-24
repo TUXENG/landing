@@ -1,149 +1,133 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FormEvent, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { FileText, FolderKanban, Inbox, LogOut, MessageSquareQuote } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
-import { api } from "../../lib/api";
+import { BrandBadge } from "../../components/BrandBadge";
+import { ApiError, api } from "../../lib/api";
+import { AdminLogin } from "./AdminLogin";
+import { ContentEditor } from "./ContentEditor";
+import { LeadsInbox } from "./LeadsInbox";
+import { PortfolioManager } from "./PortfolioManager";
+import { TestimonialsManager } from "./TestimonialsManager";
+
+type AdminTab = "leads" | "portfolio" | "testimonials" | "content";
+
+const ADMIN_TABS: { id: AdminTab; label: string; icon: typeof Inbox }[] = [
+  { id: "leads", label: "Leads CRM", icon: Inbox },
+  { id: "portfolio", label: "Portafolio", icon: FolderKanban },
+  { id: "testimonials", label: "Testimonios", icon: MessageSquareQuote },
+  { id: "content", label: "Contenido", icon: FileText },
+];
 
 export function AdminPanel() {
-  const qc = useQueryClient();
   const [token, setToken] = useState<string>(() => sessionStorage.getItem("admin_token") || "");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loginErr, setLoginErr] = useState("");
+  const [activeTab, setActiveTab] = useState<AdminTab>("leads");
 
-  const [headline, setHeadline] = useState("");
-  const [subheadline, setSubheadline] = useState("");
-  const [saveMsg, setSaveMsg] = useState("");
-
-  const leadsQuery = useQuery({
-    queryKey: ["admin-leads", token],
-    queryFn: () => api.getLeads(token),
+  const meQuery = useQuery({
+    queryKey: ["admin-me", token],
+    queryFn: () => api.getMe(token),
     enabled: Boolean(token),
+    retry: false,
   });
 
-  const contentQuery = useQuery({
-    queryKey: ["content"],
-    queryFn: api.getContent,
-    enabled: Boolean(token),
-  });
-
-  const saveHero = useMutation({
-    mutationFn: () => {
-      const current = contentQuery.data?.hero?.payload || {};
-      return api.updateContent(token, "hero", "Hero Principal", {
-        ...current,
-        headline: headline || current.headline,
-        subheadline: subheadline || current.subheadline,
-      });
-    },
-    onSuccess: () => {
-      setSaveMsg("Contenido actualizado y caché Redis invalidada.");
-      qc.invalidateQueries({ queryKey: ["content"] });
-    },
-  });
-
-  async function handleLogin(e: FormEvent) {
-    e.preventDefault();
-    setLoginErr("");
-    try {
-      const res = await api.login(email, password);
-      sessionStorage.setItem("admin_token", res.access_token);
-      setToken(res.access_token);
-    } catch (err) {
-      setLoginErr(err instanceof Error ? err.message : "Error de inicio de sesión");
+  useEffect(() => {
+    if (meQuery.error instanceof ApiError && meQuery.error.status === 401) {
+      sessionStorage.removeItem("admin_token");
+      setToken("");
     }
+  }, [meQuery.error]);
+
+  function handleLoginSuccess(newToken: string) {
+    sessionStorage.setItem("admin_token", newToken);
+    setToken(newToken);
+  }
+
+  function handleLogout() {
+    sessionStorage.removeItem("admin_token");
+    setToken("");
   }
 
   if (!token) {
+    return <AdminLogin onSuccess={handleLoginSuccess} />;
+  }
+
+  if (meQuery.isLoading) {
     return (
-      <div className="mx-auto max-w-md px-6 py-24">
-        <h1 className="text-2xl font-bold text-white">Panel Administrador</h1>
-        <form onSubmit={handleLogin} className="mt-6 space-y-4 rounded-2xl border border-slate-800 bg-slate-900 p-6">
-          <input
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Correo administrador"
-            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-sm text-white"
-          />
-          <input
-            type="password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Contraseña"
-            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-sm text-white"
-          />
-          {loginErr && <p className="text-xs text-rose-400">{loginErr}</p>}
-          <button
-            type="submit"
-            className="w-full rounded-xl bg-indigo-500 py-2.5 text-sm font-semibold text-white hover:bg-indigo-400"
-          >
-            Ingresar
-          </button>
-        </form>
+      <div className="flex min-h-screen items-center justify-center bg-[#08090D] text-sm text-zinc-400">
+        Verificando sesión administrativa...
       </div>
     );
   }
 
-  const currentHero = contentQuery.data?.hero?.payload || {};
-
   return (
-    <div className="mx-auto max-w-4xl px-6 py-12 space-y-10">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-white">Panel Administrador</h1>
-        <button
-          onClick={() => {
-            sessionStorage.removeItem("admin_token");
-            setToken("");
-          }}
-          className="rounded-lg border border-slate-700 px-3 py-1.5 text-xs text-slate-300 hover:text-white"
-        >
-          Cerrar sesión
-        </button>
-      </div>
+    <div className="min-h-screen bg-[#08090D] text-zinc-100">
+      <header className="sticky top-0 z-30 border-b border-white/8 bg-[#08090D]/85 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-5 py-3.5 sm:px-6">
+          <div className="flex items-center gap-4">
+            <Link to="/">
+              <BrandBadge compact />
+            </Link>
+            <span className="rounded-full border border-amber-400/30 bg-amber-400/10 px-2.5 py-0.5 font-mono text-[10px] font-semibold text-amber-300 uppercase">
+              Admin
+            </span>
+          </div>
 
-      <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6 space-y-4">
-        <h2 className="text-lg font-semibold text-white">Editar Hero Principal</h2>
-        <input
-          defaultValue={String(currentHero.headline || "")}
-          onChange={(e) => setHeadline(e.target.value)}
-          placeholder="Titular principal"
-          className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-sm text-white"
-        />
-        <textarea
-          rows={3}
-          defaultValue={String(currentHero.subheadline || "")}
-          onChange={(e) => setSubheadline(e.target.value)}
-          placeholder="Subtítulo"
-          className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-sm text-white"
-        />
-        {saveMsg && <p className="text-xs text-emerald-400">{saveMsg}</p>}
-        <button
-          onClick={() => saveHero.mutate()}
-          disabled={saveHero.isPending}
-          className="rounded-xl bg-indigo-500 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-400"
-        >
-          Guardar cambios
-        </button>
-      </section>
-
-      <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6">
-        <h2 className="text-lg font-semibold text-white">Leads recibidos ({leadsQuery.data?.length || 0})</h2>
-        <div className="mt-4 space-y-3">
-          {(leadsQuery.data || []).map((lead) => (
-            <div key={lead.id} className="rounded-xl border border-slate-800 bg-slate-950 p-4 text-sm">
-              <div className="flex flex-wrap justify-between gap-2 font-medium text-white">
-                <span>
-                  {lead.name} &lt;{lead.email}&gt; {lead.phone ? `· ${lead.phone}` : ""}
-                </span>
-                <span className="text-xs text-slate-400">{new Date(lead.created_at).toLocaleString()}</span>
-              </div>
-              <p className="mt-2 text-slate-300">{lead.message}</p>
-            </div>
-          ))}
+          <div className="flex items-center gap-3">
+            {meQuery.data?.email && (
+              <span className="hidden font-mono text-xs text-zinc-400 sm:inline">
+                {meQuery.data.email}
+              </span>
+            )}
+            <Link
+              to="/"
+              className="rounded-full border border-white/10 px-3 py-1.5 text-xs text-zinc-300 hover:border-amber-400/40 hover:text-white"
+            >
+              Ver sitio
+            </Link>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="inline-flex items-center gap-1.5 rounded-full border border-white/10 px-3 py-1.5 text-xs text-zinc-300 hover:border-rose-400/40 hover:text-rose-300"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              <span>Salir</span>
+            </button>
+          </div>
         </div>
-      </section>
+
+        {/* Barra de 4 pestañas */}
+        <div className="mx-auto max-w-6xl px-5 pb-3 sm:px-6">
+          <nav className="flex flex-wrap gap-2" aria-label="Secciones administrativas">
+            {ADMIN_TABS.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold transition ${
+                    isActive
+                      ? "bg-amber-400 text-zinc-950 shadow-sm shadow-amber-400/30"
+                      : "border border-white/10 bg-zinc-900/60 text-zinc-300 hover:border-white/25 hover:text-white"
+                  }`}
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
+          </nav>
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-6xl px-5 py-8 sm:px-6">
+        {activeTab === "leads" && <LeadsInbox token={token} />}
+        {activeTab === "portfolio" && <PortfolioManager token={token} />}
+        {activeTab === "testimonials" && <TestimonialsManager token={token} />}
+        {activeTab === "content" && <ContentEditor token={token} />}
+      </main>
     </div>
   );
 }

@@ -1,14 +1,23 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 
+import { WhatsAppFloat } from "../components/WhatsAppFloat";
 import { DEFAULT_CONTENT } from "../features/landing/defaultContent";
-import { Faq, type FaqItem } from "../features/landing/Faq";
+import { FaqSection } from "../features/landing/FaqSection";
+import { Footer } from "../features/landing/Footer";
 import { Hero } from "../features/landing/Hero";
-import { Services, type ServiceItem } from "../features/landing/Services";
+import { Navbar } from "../features/landing/Navbar";
+import { PortfolioGallery } from "../features/landing/PortfolioGallery";
+import { ServiceTabs } from "../features/landing/ServiceTabs";
+import { TabPanel } from "../features/landing/TabPanel";
+import { TestimonialsSection } from "../features/landing/TestimonialsSection";
 import { ContactForm } from "../features/leads/ContactForm";
+import { useActiveTab } from "../hooks/useActiveTab";
 import { api } from "../lib/api";
+import { buildWhatsAppUrl } from "../lib/whatsapp";
 
 export function Home() {
+  const { activeTab, selectTab } = useActiveTab("desarrollo");
+
   const { data } = useQuery({
     queryKey: ["content"],
     queryFn: api.getContent,
@@ -17,51 +26,36 @@ export function Home() {
     retry: 1,
   });
 
-  const hero = (data.hero?.payload || DEFAULT_CONTENT.hero.payload) as Record<string, string>;
-  const services = ((data.services?.payload?.items as ServiceItem[]) ||
-    (DEFAULT_CONTENT.services.payload.items as ServiceItem[]));
-  const faq = ((data.faq?.payload?.items as FaqItem[]) || (DEFAULT_CONTENT.faq.payload.items as FaqItem[]));
+  const content = data || DEFAULT_CONTENT;
+  const heroPayload = content.hero?.payload || DEFAULT_CONTENT.hero!.payload;
+  const channels = content.contact_channels?.payload || DEFAULT_CONTENT.contact_channels!.payload;
+  const faqItems = content.faq?.payload?.items || DEFAULT_CONTENT.faq!.payload.items || [];
+  const heroWhatsappUrl = buildWhatsAppUrl(
+    channels.whatsapp,
+    channels.whatsapp_default_message,
+    "general",
+  );
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
-      <header className="sticky top-0 z-20 border-b border-slate-800/80 bg-slate-950/80 backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-          <span className="text-lg font-bold tracking-tight text-white">TuxEng</span>
-          <nav className="flex items-center gap-6 text-sm text-slate-300">
-            <a href="#servicios" className="hover:text-white">
-              Servicios
-            </a>
-            <a href="#faq" className="hover:text-white">
-              FAQ
-            </a>
-            <a href="#contacto" className="rounded-lg bg-indigo-500/20 px-3 py-1.5 font-medium text-indigo-300 hover:bg-indigo-500/30">
-              Contacto
-            </a>
-          </nav>
-        </div>
-      </header>
+    <div className="min-h-screen bg-[#08090D] text-zinc-50">
+      <Navbar activeTab={activeTab} onSelectTab={selectTab} channels={channels} />
 
       <main>
-        <Hero
-          badge={hero.badge || ""}
-          headline={hero.headline || ""}
-          subheadline={hero.subheadline || ""}
-          ctaPrimary={hero.cta_primary || "Contactar"}
-          ctaSecondary={hero.cta_secondary || "Servicios"}
+        <Hero hero={heroPayload} whatsappUrl={heroWhatsappUrl} />
+        <ServiceTabs activeTab={activeTab} onSelectTab={(tab) => selectTab(tab, false)} />
+        <TabPanel activeTab={activeTab} content={content} />
+        <PortfolioGallery activeTab={activeTab} />
+        <TestimonialsSection activeTab={activeTab} />
+        <FaqSection
+          title={content.faq?.title || "Preguntas Frecuentes"}
+          items={faqItems}
+          activeTab={activeTab}
         />
-        <Services title={data.services?.title || "Servicios"} items={services} />
-        <Faq title={data.faq?.title || "Preguntas Frecuentes"} items={faq} />
-        <ContactForm />
+        <ContactForm activeTab={activeTab} channels={channels} />
       </main>
 
-      <footer className="border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">
-        <p>
-          © {new Date().getFullYear()} TuxEng ·{" "}
-          <Link to="/admin" className="underline hover:text-slate-300">
-            Admin
-          </Link>
-        </p>
-      </footer>
+      <Footer channels={channels} activeTab={activeTab} onSelectTab={selectTab} />
+      <WhatsAppFloat activeTab={activeTab} content={content} />
     </div>
   );
 }
