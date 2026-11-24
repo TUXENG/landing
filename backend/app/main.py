@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
+from sqlalchemy import func
 
 from app.api.v1.router import api_router
 from app.core.config import settings
@@ -18,11 +19,16 @@ def _ensure_initial_admin() -> None:
         return
     try:
         with SessionLocal() as db:
-            exists = db.query(AdminUser).filter(AdminUser.email == settings.admin_email.lower()).first()
+            normalized_email = settings.admin_email.strip().lower()
+            exists = (
+                db.query(AdminUser)
+                .filter(func.lower(AdminUser.email) == normalized_email)
+                .first()
+            )
             if exists is None:
                 db.add(
                     AdminUser(
-                        email=settings.admin_email.lower(),
+                        email=normalized_email,
                         password_hash=hash_password(settings.admin_initial_password),
                         is_active=True,
                     )
@@ -55,7 +61,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origin_list,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
     allow_headers=["Authorization", "Content-Type"],
 )
 
