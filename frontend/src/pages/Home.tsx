@@ -21,8 +21,8 @@ export function Home() {
   const { data } = useQuery({
     queryKey: ["content"],
     queryFn: api.getContent,
-    initialData: DEFAULT_CONTENT,
-    staleTime: 60_000,
+    placeholderData: DEFAULT_CONTENT,
+    staleTime: 30_000,
     retry: 1,
   });
 

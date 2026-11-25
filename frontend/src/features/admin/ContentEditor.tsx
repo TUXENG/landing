@@ -29,7 +29,7 @@ export function ContentEditor({ token }: ContentEditorProps) {
   const contentQuery = useQuery({
     queryKey: ["content"],
     queryFn: api.getContent,
-    initialData: DEFAULT_CONTENT,
+    placeholderData: DEFAULT_CONTENT,
   });
 
   useEffect(() => {
